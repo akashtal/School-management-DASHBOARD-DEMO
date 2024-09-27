@@ -1,0 +1,61 @@
+<?php
+session_start();
+error_reporting(0);
+include('database.php');
+
+$my_idd = $_SESSION['my_id'];
+$my_name = $_SESSION['my_name'];
+$my_roll = $_SESSION['my_roll'];
+
+if (empty($my_idd)) {
+    // Redirect to index.php if user ID is empty
+    header('Location: index.php');
+    exit(); // Add exit to stop further execution
+}
+
+if ($my_roll != 'student') {
+    echo ("<script LANGUAGE='JavaScript'>
+        window.alert('You cannot access this page');
+        window.location.href='dashboard.php';
+    </script>");
+}
+
+$value1 = $_POST['st_photo'];
+$value2 = $_POST['st_markshet'];
+$id = $_POST['id'];
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $allow = array("jpg", "JPG", "jpeg", "JPEG", "png", "PNG", "pdf", "PDF");
+
+    // 1st File
+    if ($_FILES['st_photo']['name'] != "") {
+        $photo1 = basename($_FILES['st_photo']['name']);
+        $extension = pathinfo($photo1, PATHINFO_EXTENSION);
+
+        if (in_array($extension, $allow)) {
+            $target_path = "uploads-doc/student/";
+            $photo1 = md5(rand() * time()) . '.' . $extension;
+            $target_path = $target_path . $photo1;
+            move_uploaded_file($_FILES['st_photo']['tmp_name'], $target_path);
+            $photo_1 = "reg_st_photo = '$photo1',";
+        }
+    }
+
+    try {
+        $sql = "UPDATE reg_from SET $photo_1 reg_st_photo = :value1 WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':value1', $value1);
+        $stmt->bindParam(':id', $id);
+
+        $stmt->execute();
+        echo "Record updated successfully.";
+    } catch (PDOException $e) {
+        echo "Error: " . $e->getMessage();
+    }
+}
+
+// Theme file includes here
+include('inc/header.php');
+include('inc/sidebar.php');
+include('inc/nevbar.php');
+?>
